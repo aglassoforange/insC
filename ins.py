@@ -9,9 +9,10 @@ class Crawl_ins():
     has_next_page = True
     cursor=""
     comment_cusor=""
-    count=0
+    count = 0
     comment_output = []
-
+    has_next_comment_page = True
+    test_count = 0
     def crawl_ins(url):
         headers = {
             "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 "
@@ -123,10 +124,10 @@ class Crawl_ins():
             'cookie': 'ig_did=B6A0EBE8-3CC7-4A42-AD88-56EEBC3FE1A7; mid=Xe9AHwALAAFnS3pWPfUiZd7mU3G5; fbm_124024574287414=base_domain=.instagram.com;'
                       ' csrftoken=OJnzccnHaQyEjSUpgZGfFoQVCXUG2wq3; shbid=12239; shbts=1575960619.8887541; ds_user_id=2164068030;'
                       ' sessionid=2164068030%3AD8dWOTnFw5PhZ7%3A2; rur=ASH; urlgen="{\"103.95.207.86\": 136600}:1ifIYs:Hf0dUoHWtu4_9ctmx0cP8Fr1TRk"',
-            #'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-            #'accept-encoding': 'gzip, deflate, br',
-            #'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
-            #'cache-control': 'max-age=0'
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+            'accept-encoding': 'gzip, deflate, br',
+            'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
+            'cache-control': 'max-age=0'
         }
         html = requests.get(title, headers=headers)
         html = html.text
@@ -138,10 +139,11 @@ class Crawl_ins():
         html_json=json.loads(output)
         shortcode = html_json['graphql']['shortcode_media']['shortcode']
         self.comment_cusor = html_json['graphql']['shortcode_media']['edge_media_to_parent_comment']['page_info']['end_cursor']
-        self.has_next_page = html_json['graphql']['shortcode_media']['edge_media_to_parent_comment']['page_info']['has_next_page']
+        self.has_next_comment_page = html_json['graphql']['shortcode_media']['edge_media_to_parent_comment']['page_info']['has_next_page']
         edges = html_json['graphql']['shortcode_media']['edge_media_to_parent_comment']['edges']
-        data = {}
         for edge in edges:
+            data = {}
+            self.test_count= self.test_count+1
             commenter_id = edge['node']['owner']['id']
             commenter_name = edge['node']['owner']['username']
             comment = edge['node']['text']
@@ -158,13 +160,62 @@ class Crawl_ins():
             out_json['comment like quantity'] = comment_liked
             out_json['commenter\'s profile page'] = commenter_page
             self.comment_output.append(out_json)
-        self.comment_output.insert(0,'page_link: '+display_url)
+        print(self.test_count)
+        self.comment_output.insert(0, 'page_link: '+display_url)
 
-    #def automation_in_page(self,comment_cusor):
+
+    def get_page_json(self,url):
+        headers = {
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
+            'cookie': 'ig_did=B6A0EBE8-3CC7-4A42-AD88-56EEBC3FE1A7; mid=Xe9AHwALAAFnS3pWPfUiZd7mU3G5; fbm_124024574287414=base_domain=.instagram.com;'
+                      ' csrftoken=OJnzccnHaQyEjSUpgZGfFoQVCXUG2wq3; shbid=12239; shbts=1575960619.8887541; ds_user_id=2164068030;'
+                      ' sessionid=2164068030%3AD8dWOTnFw5PhZ7%3A2; rur=ASH; urlgen="{\"103.95.207.86\": 136600}:1ifIYs:Hf0dUoHWtu4_9ctmx0cP8Fr1TRk"',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+            'accept-encoding': 'gzip, deflate, br',
+            'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
+            'cache-control': 'max-age=0'
+        }
+        vars = {
+            "query_hash": "97b41c52301f77ce508f55e66d17620e",
+            "shortcode": url, "first": "12", "after": str(self.comment_cusor)
+        }
+        url = 'https://www.instagram.com/graphql/query/'
+        file = requests.get(url, headers=headers, params=vars)
+        file = file.text
+        analysis = json.loads(str(file))
+        self.has_next_comment_page = analysis['data']['shortcode_media']['edge_media_to_parent_comment']['page_info']['has_next_page']
+        self.comment_cusor = analysis['data']['shortcode_media']['edge_media_to_parent_comment']['page_info']['end_cursor']
+        edges = analysis['data']['shortcode_media']['edge_media_to_parent_comment']['edges']
+        for edge in edges:
+            data = {}
+            self.test_count = self.test_count+1
+            commenter_id = edge['node']['owner']['id']
+            commenter_name = edge['node']['owner']['username']
+            comment = edge['node']['text']
+            time = edge['node']['created_at']
+            profile_pic = edge['node']['owner']['profile_pic_url']
+            comment_liked = edge['node']['edge_liked_by']['count']
+            commenter_page = 'https://www.instagram.com/' + commenter_name + '/'
+            out_json = data
+            out_json['time'] = time
+            out_json['id'] = commenter_id
+            out_json['name'] = commenter_name
+            out_json['text'] = comment
+            out_json['commenter\'pic'] = profile_pic
+            out_json['comment like quantity'] = comment_liked
+            out_json['commenter\'s profile page'] = commenter_page
+            self.comment_output.append(out_json)
+        self.comment_output.insert(0, 'page_link: ' + url)
+
+    def automation_in_page(self, display_url):
+        dp = Crawl_ins()
+        dp.get_page(display_url)
+        while dp.has_next_comment_page:
+            dp.get_page_json(display_url)
+        return dp.comment_output
+
 
 if __name__=="__main__":
-    dp = Crawl_ins()
-    dp.get_page('B55lfabgXYF')
-    print(dp.comment_output)
-
-
+    cp = Crawl_ins()
+    cp.automation_in_page('B5q86nwAOS32CijU9yq3M_Qp9vuS-JWbVGlu9g0')
+    print(cp.comment_output)

@@ -166,6 +166,5 @@ if __name__=="__main__":
     dp = Crawl_ins()
     dp.get_page('B55lfabgXYF')
     print(dp.comment_output)
-    print('test to see if I can update this ')
 
 

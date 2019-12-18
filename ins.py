@@ -131,28 +131,41 @@ class Crawl_ins():
         html = requests.get(title, headers=headers)
         html = html.text
         html=str(html)
-        midwork =re.search(r'<script type="text/javascript">window.__additionalDataLoaded((.*?));</script>', html).group(2)
+        midwork = re.search(r'<script type="text/javascript">window.__additionalDataLoaded((.*?));</script>', html).group(2)
         start = midwork.find(',')
         end = midwork.find(');</script>')
         output = (midwork[start+1:end])
         html_json=json.loads(output)
         shortcode = html_json['graphql']['shortcode_media']['shortcode']
         self.comment_cusor = html_json['graphql']['shortcode_media']['edge_media_to_parent_comment']['page_info']['end_cursor']
-
         self.has_next_page = html_json['graphql']['shortcode_media']['edge_media_to_parent_comment']['page_info']['has_next_page']
         edges = html_json['graphql']['shortcode_media']['edge_media_to_parent_comment']['edges']
-
+        data = {}
         for edge in edges:
+            commenter_id = edge['node']['owner']['id']
+            commenter_name = edge['node']['owner']['username']
             comment = edge['node']['text']
             time = edge['node']['created_at']
             profile_pic = edge['node']['owner']['profile_pic_url']
             comment_liked  = edge['node']['edge_liked_by']['count']
-            print(comment)
-        return comment
+            commenter_page = 'https://www.instagram.com/'+commenter_name+'/'
+            out_json = data
+            out_json['time'] = time
+            out_json['id'] = commenter_id
+            out_json['name'] = commenter_name
+            out_json['text'] = comment
+            out_json['commenter\'pic'] = profile_pic
+            out_json['comment like quantity'] = comment_liked
+            out_json['commenter\'s profile page'] = commenter_page
+            self.comment_output.append(out_json)
+        self.comment_output.insert(0,'page_link: '+display_url)
+
+    #def automation_in_page(self,comment_cusor):
+
 if __name__=="__main__":
     dp = Crawl_ins()
-    output1 = dp.get_page('B55lfabgXYF')
-    print(output1)
+    dp.get_page('B55lfabgXYF')
+    print(dp.comment_output)
     print('test to see if I can update this ')
 
 

@@ -5,6 +5,9 @@ import requests
 import re
 import urllib.request
 import json
+import time as tt
+import random
+
 
 class Crawl_ins():
 
@@ -30,6 +33,7 @@ class Crawl_ins():
         }
         try:
             response = requests.get(url, headers=headers)
+            tt.sleep(random.random())
             return response.text
         except Exception as e:
              print(e)
@@ -109,6 +113,7 @@ class Crawl_ins():
             }
             try:
                 response = requests.get(tittle, headers=headers, params=vars)
+                tt.sleep(random.random())
                 return response
             except Exception as e:
                 print(e)
@@ -146,6 +151,7 @@ class Crawl_ins():
         }
         try:
             html = requests.get(title, headers=headers)
+            tt.sleep(random.random())
         except Exception as e:
             print(e)
         html = html.text
@@ -204,6 +210,7 @@ class Crawl_ins():
         url = 'https://www.instagram.com/graphql/query/'
         try:
             file = requests.get(url, headers=headers, params=vars)
+            tt.sleep(random.random())
         except Exception as e:
             print(e)
         file = file.text
@@ -241,6 +248,8 @@ class Crawl_ins():
         dp = Crawl_ins()
         count = dp.get_page(display_url)
         print(count)
+
+
         try:
             while dp.has_next_comment_page:
                 count=count+dp.get_page_json(display_url)
@@ -249,7 +258,10 @@ class Crawl_ins():
             print(e)
 
 if __name__=="__main__":
+    start = tt.time()
+    print(start)
     ic = Crawl_ins()
-    output,count=ic.automation_next('cathrynli')
-    print(count)
-    print(output)
+    output,count=ic.automation_next('billieeilish')
+    end = tt.time()
+    print(end)
+    print('operating time is %d seconds long'%(end-start))

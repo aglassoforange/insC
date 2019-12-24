@@ -5,6 +5,9 @@ import requests
 import re
 import urllib.request
 import json
+import time as tt
+import random
+
 
 class Crawl_ins():
 
@@ -30,6 +33,7 @@ class Crawl_ins():
         }
         try:
             response = requests.get(url, headers=headers)
+            tt.sleep(random.random())
             return response.text
         except Exception as e:
              print(e)
@@ -109,6 +113,7 @@ class Crawl_ins():
             }
             try:
                 response = requests.get(tittle, headers=headers, params=vars)
+                tt.sleep(random.random())
                 return response
             except Exception as e:
                 print(e)
@@ -146,6 +151,7 @@ class Crawl_ins():
         }
         try:
             html = requests.get(title, headers=headers)
+            tt.sleep(random.random())
         except Exception as e:
             print(e)
         html = html.text
@@ -162,6 +168,8 @@ class Crawl_ins():
             self.has_next_comment_page = html_json['graphql']['shortcode_media']['edge_media_to_parent_comment']['page_info']['has_next_page']
             edges = html_json['graphql']['shortcode_media']['edge_media_to_parent_comment']['edges']
             test_count = 0
+            newlist =[]
+            newlist.append(display_url)
             for edge in edges:
                 data = {}
                 test_count= test_count+1
@@ -180,8 +188,8 @@ class Crawl_ins():
                 out_json['commenter\'pic'] = profile_pic
                 out_json['comment like quantity'] = comment_liked
                 out_json['commenter\'s profile page'] = commenter_page
-                self.comment_output.append(out_json)
-            self.comment_output.insert(0, 'page_link: '+display_url)
+                newlist.append(out_json)
+            self.comment_output.append(newlist)
             return test_count
         except Exception as e:
             print(e)
@@ -204,6 +212,7 @@ class Crawl_ins():
         url = 'https://www.instagram.com/graphql/query/'
         try:
             file = requests.get(url, headers=headers, params=vars)
+            tt.sleep(random.random())
         except Exception as e:
             print(e)
         file = file.text
@@ -241,6 +250,8 @@ class Crawl_ins():
         dp = Crawl_ins()
         count = dp.get_page(display_url)
         print(count)
+
+
         try:
             while dp.has_next_comment_page:
                 count=count+dp.get_page_json(display_url)
@@ -249,7 +260,19 @@ class Crawl_ins():
             print(e)
 
 if __name__=="__main__":
+    start = tt.time()
     ic = Crawl_ins()
-    output,count=ic.automation_next('cathrynli')
+    output,count=ic.automation_next('_lhyaaaaan')
     print(count)
+    page_link=[]
     print(output)
+    for op in output :
+        page_link.append(op['display_url'])
+        print(page_link)
+    for link in page_link:
+        ic.automation_in_page(link)
+    print(ic.comment_output)
+    print(ic.outputlist)
+    end =tt.time()
+
+    print('operating time is %d seconds long'%(end-start))

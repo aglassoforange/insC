@@ -18,6 +18,7 @@ class Crawl_ins():
     cursor=""
     comment_cusor=""
     comment_output = []
+    basic_info = {}
     has_next_comment_page = True
     whether_next_post = True
     whether_next_comment = True
@@ -42,6 +43,7 @@ class Crawl_ins():
             'cache-control': 'max-age=0'
         }
         try:
+            self.basic_info['user_url']= url
             response = requests.get(url, headers=headers)
             tt.sleep(random.random())
             return response.text
@@ -59,6 +61,9 @@ class Crawl_ins():
             id = html_json['entry_data']['ProfilePage'][0]['graphql']['user']['id']
             username = html_json['entry_data']['ProfilePage'][0]['graphql']['user']['username']
             test_count = 0
+            self.basic_info['user_id']=id
+            self.basic_info['user_name']=username
+
             for edge in edges:
                     test_count+=1
                     id_pic = edge['node']['id']
@@ -139,20 +144,15 @@ class Crawl_ins():
         answer= cp.html_parse_key(html,number_post)
         id = answer[0]
         count = answer[5]
-        print(count)
         try:
             while cp.has_next_page is True:
                 cp.checker(number_post,count)
                 if cp.whether_next_post == True:
-                    print(cp.whether_next_post)
                     json=cp.get_next_pagejson(cp.cursor, id)
                     json=json.text
                     count1=cp.json_parse_key(json,number_post)[4]
                     count +=count1
                 else:
-                    print('this is the end')
-                    print(count)
-                    print(cp.outputlist)
                     return cp.outputlist,count
             return cp.outputlist,count
         except Exception as e:
@@ -277,7 +277,7 @@ class Crawl_ins():
         try:
             while dp.has_next_comment_page:
                 count=count+dp.get_page_json(display_url)
-            return dp.comment_output, count
+            return count
         except Exception as e:
             print(e)
 
@@ -289,29 +289,28 @@ class Crawl_ins():
         page_link = []
         for op in output:
             page_link.append(op['display_url'])
-        for link in page_link:
-            a=page_link.index(link)
-            if a%3 == 0:
-             thread1 =[]
-             thread1.append(link)
-            if a%3 == 1:
-                thread2=[]
-                thread2.append(link)
-            if a%3 == 2:
-                thread3 = []
-                thread3.append(link)
-            t1 = threading.Thread(target=ic.automation_in_page,args=thread1)
-            t1.start()
-            tt.sleep(2)
-            t2 = threading.Thread(target=ic.automation_in_page,args=thread2)
-            t2.start()
-            tt.sleep(2)
-            t3 = threading.Thread(target=ic.automation_in_page, args=thread3)
-            t3.start()
-            tt.sleep(2)
+        for link in page_link[:num]:
+            # a=page_link.index(link)
+            # if a%3 == 0:
+            #  thread1 =[]
+            #  thread1.append(link)
+            # if a%3 == 1:
+            #     thread2=[]
+            #     thread2.append(link)
+            # if a%3 == 2:
+            #     thread3 = []
+            #     thread3.append(link)
+            # t1 = threading.Thread(target=ic.automation_in_page,args=thread1)
+            # t1.start()
+            # tt.sleep(2)
+            # t2 = threading.Thread(target=ic.automation_in_page,args=thread2)
+            # t2.start()
+            # tt.sleep(2)
+            # t3 = threading.Thread(target=ic.automation_in_page, args=thread3)
+            # t3.start()
+            # tt.sleep()
+            count =ic.automation_in_page(link)
 
-        print(ic.comment_output)
-        print(ic.outputlist)
 
 
 
@@ -322,6 +321,13 @@ if __name__=="__main__":
     inscrawls = Crawl_ins()
     # # # inscrawls.final('lsl_shirley_')
     # inscrawls.final('lsl_shirley_')
-    inscrawls.automation_next('gracewndeng',17)
+    inscrawls.final('lilili.1104',13)
+    print('the basic information:\n%s'%inscrawls.basic_info)
+    print('the comments:\n%s'%inscrawls.comment_output)
+    print('the post: \n%s'%inscrawls.outputlist)
     end =tt.time()
     print('operating time is %d seconds long'%(end-start))
+    f = open("inscrawl_result.txt ", 'a')
+    f.write('\nthe basic information:\n%s'%inscrawls.basic_info+'\n')
+    f.write('the post: \n%s'%inscrawls.outputlist+'\n')
+    f.write('the comments:\n%s'%inscrawls.comment_output+'\n')

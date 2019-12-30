@@ -1,12 +1,20 @@
 import time
 import multiprocessing as mp
+import progressbar
 from multiprocessing import Process
-def accumulation(x):
-    for a in range(x):
-        print(a)
+
+class good_shit:
+        pass
+
+
+
+def accumulation(self,x):
+        for a in range(1000000):
+            print(x)
+
 if __name__=="__main__":
     begin = time.time()
-    p = Process(target=accumulation, args=(1000000,))
+    p = Process(target=accumulation, args=('1200000',))
     p.start()
     p.join()
     #  accumulation(100https://www.youtube.com/results?search_query=lofi&sp=EgQQAVgD00000)

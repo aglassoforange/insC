@@ -45,7 +45,7 @@ class Crawl_ins():
         try:
             self.basic_info['user_url']= url
             response = requests.get(url, headers=headers)
-            tt.sleep(random.random())
+            tt.sleep(random.random()*100)
             return response.text
         except Exception as e:
              print(e)
@@ -132,7 +132,7 @@ class Crawl_ins():
             }
             try:
                 response = requests.get(tittle, headers=headers, params=vars)
-                tt.sleep(random.random())
+                tt.sleep(random.random() * 100)
                 return response
             except Exception as e:
                 print(e)
@@ -174,7 +174,7 @@ class Crawl_ins():
         }
         try:
             html = requests.get(title, headers=headers)
-            tt.sleep(random.random())
+            tt.sleep(random.random()*100)
         except Exception as e:
             print(e)
         html = html.text
@@ -235,7 +235,7 @@ class Crawl_ins():
         url = 'https://www.instagram.com/graphql/query/'
         try:
             file = requests.get(url, headers=headers, params=vars)
-            tt.sleep(random.random())
+            tt.sleep(random.random()*100)
         except Exception as e:
             print(e)
         file = file.text
@@ -285,31 +285,31 @@ class Crawl_ins():
     def final(self,name,num):
         ic = Crawl_ins()
         output, count = ic.automation_next(name,num)
-        #print(count)
         page_link = []
         for op in output:
             page_link.append(op['display_url'])
         for link in page_link[:num]:
-            # a=page_link.index(link)
-            # if a%3 == 0:
-            #  thread1 =[]
-            #  thread1.append(link)
-            # if a%3 == 1:
-            #     thread2=[]
-            #     thread2.append(link)
-            # if a%3 == 2:
-            #     thread3 = []
-            #     thread3.append(link)
-            # t1 = threading.Thread(target=ic.automation_in_page,args=thread1)
-            # t1.start()
-            # tt.sleep(2)
-            # t2 = threading.Thread(target=ic.automation_in_page,args=thread2)
-            # t2.start()
-            # tt.sleep(2)
-            # t3 = threading.Thread(target=ic.automation_in_page, args=thread3)
-            # t3.start()
-            # tt.sleep()
-            count =ic.automation_in_page(link)
+            a=page_link.index(link)
+            if a%3 == 0:
+             thread1 =[]
+             thread1.append(link)
+            if a%3 == 1:
+                thread2=[]
+                thread2.append(link)
+            if a%3 == 2:
+                thread3 = []
+                thread3.append(link)
+        t1 = threading.Thread(target=ic.automation_in_page,args=thread1)
+        t1.start()
+        tt.sleep(2)
+        t2 = threading.Thread(target=ic.automation_in_page,args=thread2)
+        t2.start()
+        tt.sleep(2)
+        t3 = threading.Thread(target=ic.automation_in_page, args=thread3)
+        t3.start()
+        tt.sleep(2)
+
+            # count =ic.automation_in_page(link)
 
 
 

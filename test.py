@@ -1,30 +1,33 @@
 import time
 import multiprocessing as mp
 import progressbar
+from threading import Thread
 from multiprocessing import Process
-
-class good_shit:
-        pass
+import queue
 
 
+def stuff(self):
+        while True:
+            a = q.get()
+            for i in range(10):
+                print(a+i)
+            q.task_done()
 
-def accumulation(self,x):
-        for a in range(1000000):
-            print(x)
+q =queue.Queue()
+threads=[]
+for i in range(2):
 
-if __name__=="__main__":
-    begin = time.time()
-    p = Process(target=accumulation, args=('1200000',))
-    p.start()
-    p.join()
-    #  accumulation(100https://www.youtube.com/results?search_query=lofi&sp=EgQQAVgD00000)
-    # pool =mp.Pool(mp.cpu_count())
-    # pool.map(accumulation,[1000000])
-    # pool.close()
-    # pool.join()
-    end =time.time()
-    print(begin,end)
-    print('the totol time is %f second'%(end-begin))
+    worker=Thread(target=stuff)
+    worker.setDaemon(True)
+    worker.start()
+    threads.append(worker)
 
+for i in range(10):
+    q.put(1)
 
+q.join()
+for i in range(2):
+    q.put(None)
+for t in threads:
+    t.join
 

@@ -7,16 +7,28 @@ import urllib.request
 import json
 import time as tt
 import random
+import threading
+import progressbar
 
 
 class Crawl_ins():
-
+    post_count = 0
     outputlist = []
     has_next_page = True
     cursor=""
     comment_cusor=""
     comment_output = []
+    basic_info = {}
     has_next_comment_page = True
+    whether_next_post = True
+    whether_next_comment = True
+    urllist = []
+
+    def checker(self,number_post,current_post):
+        if(current_post<number_post):
+            pass
+        else:
+            self.whether_next_post = False
 
     #得到个人首页
     def get_id(self, name):
@@ -32,8 +44,9 @@ class Crawl_ins():
             'cache-control': 'max-age=0'
         }
         try:
+            self.basic_info['user_url']= url
             response = requests.get(url, headers=headers)
-            tt.sleep(random.random())
+            tt.sleep(random.random()*100)
             return response.text
         except Exception as e:
              print(e)
@@ -49,25 +62,30 @@ class Crawl_ins():
             id = html_json['entry_data']['ProfilePage'][0]['graphql']['user']['id']
             username = html_json['entry_data']['ProfilePage'][0]['graphql']['user']['username']
             test_count = 0
+            self.basic_info['user_id']=id
+            self.basic_info['user_name']=username
+            self.basic_info['total_post']=html_json['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media']['count']
             for edge in edges:
-                test_count+=1
-                id_pic = edge['node']['id']
-                display_url = edge['node']['shortcode']
-                comment_count = edge['node']['edge_media_to_comment']['count']
-                time = edge['node']['taken_at_timestamp']
-                data = {}
-                out_json = data
-                out_json['id_pic'] = id_pic
-                out_json['display_url'] = display_url
-                out_json['comment_count'] = comment_count
-                out_json['time'] = time
-                self.outputlist.append(out_json)
+                    test_count+=1
+                    id_pic = edge['node']['id']
+                    display_url = edge['node']['shortcode']
+                    comment_count = edge['node']['edge_media_to_comment']['count']
+                    time = edge['node']['taken_at_timestamp']
+                    data = {}
+                    out_json = data
+                    out_json['id_pic'] = id_pic
+                    out_json['display_url'] = display_url
+                    self.urllist.append([display_url,1])
+                    print(self.urllist)
+                    out_json['comment_count'] = comment_count
+                    out_json['time'] = time
+                    self.outputlist.append(out_json)
             return id, username, self.has_next_page, self.cursor ,self.outputlist,test_count
         except Exception as e:
             print(e)
 
     #解析json
-    def json_parse_key(self, file ):
+    def json_parse_key(self, file,number_post ):
         file = str(file)
         result = json.loads(file)
         try:
@@ -77,18 +95,23 @@ class Crawl_ins():
             edges = result['data']['user']['edge_owner_to_timeline_media']['edges']
             test_count = 0
             for edge in edges:
-                test_count+=1
-                id_pic=edge['node']['id']
-                display_url = edge['node']['shortcode']
-                comment_count = edge['node']['edge_media_to_comment']['count']
-                time = edge['node']['taken_at_timestamp']
-                data = {}
-                out_json = data
-                out_json['id_pic'] = id_pic
-                out_json['display_url'] = display_url
-                out_json['comment_count'] = comment_count
-                out_json['time'] = time
-                self.outputlist.append(out_json)
+                self.checker(number_post, len(self.outputlist))
+                if self.whether_next_post == True:
+                    test_count+=1
+                    id_pic=edge['node']['id']
+                    display_url = edge['node']['shortcode']
+                    comment_count = edge['node']['edge_media_to_comment']['count']
+                    time = edge['node']['taken_at_timestamp']
+                    data = {}
+                    out_json = data
+                    out_json['id_pic'] = id_pic
+                    out_json['display_url'] = display_url
+                    self.urllist.append([display_url,1])
+                    out_json['comment_count'] = comment_count
+                    out_json['time'] = time
+                    self.outputlist.append(out_json)
+                else:
+                    return self.outputlist, count, self.has_next_page, self.cursor,test_count
             return self.outputlist, count, self.has_next_page, self.cursor,test_count
         except Exception as e:
             print(e)
@@ -113,25 +136,29 @@ class Crawl_ins():
             }
             try:
                 response = requests.get(tittle, headers=headers, params=vars)
-                tt.sleep(random.random())
+                tt.sleep(random.random() * 100)
                 return response
             except Exception as e:
                 print(e)
 
     #在有下一页的情况下
-    def automation_next(self, name):
-        cp = Crawl_ins()
-        html =cp.get_id(name)
-        answer= cp.html_parse_key(html)
+    def automation_next(self, name,number_post):
+        html = self.get_id(name)
+        print(html)
+        answer= self.html_parse_key(html,number_post)
         id = answer[0]
         count = answer[5]
         try:
-            while cp.has_next_page is True:
-                json=cp.get_next_pagejson(cp.cursor, id)
-                json=json.text
-                count1=cp.json_parse_key(json)[4]
-                count +=count1
-            return cp.outputlist,count
+            while self.has_next_page is True:
+                self.checker(number_post,count)
+                if self.whether_next_post == True:
+                    json=self.get_next_pagejson(self.cursor, id)
+                    json=json.text
+                    count1=self.json_parse_key(json,number_post)[4]
+                    count +=count1
+                else:
+                    return self.outputlist,count
+            return self.outputlist,count
         except Exception as e:
             print(e)
 
@@ -151,7 +178,7 @@ class Crawl_ins():
         }
         try:
             html = requests.get(title, headers=headers)
-            tt.sleep(random.random())
+            tt.sleep(random.random()*100)
         except Exception as e:
             print(e)
         html = html.text
@@ -212,7 +239,7 @@ class Crawl_ins():
         url = 'https://www.instagram.com/graphql/query/'
         try:
             file = requests.get(url, headers=headers, params=vars)
-            tt.sleep(random.random())
+            tt.sleep(random.random()*100)
         except Exception as e:
             print(e)
         file = file.text
@@ -246,33 +273,75 @@ class Crawl_ins():
             print(e)
 
     #根据页面名称 打开页面，收集留言
-    def automation_in_page(self, display_url):
-        dp = Crawl_ins()
-        count = dp.get_page(display_url)
-        print(count)
+    def automation_in_page(self, num):
+        while (self.post_count != num):
+            if(self.urllist[0][1]==1):
+                display_url =self.urllist[0][0]
+                del self.urllist[0]
+            else:
+                tt.sleep(1)
+            print(display_url)
+            self.post_count = self.get_page(display_url)
+            try:
+                while self.has_next_comment_page:
+                    print(self.post_count)
+                    self.post_count=self.post_count+self.get_page_json(display_url)
+                    print(self.post_count)
+            except Exception as e:
+                print(e)
 
 
-        try:
-            while dp.has_next_comment_page:
-                count=count+dp.get_page_json(display_url)
-            return dp.comment_output, count
-        except Exception as e:
-            print(e)
+    def final(self,name,num):
+
+        t1 = threading.Thread(target = self.automation_next, args =(name,num))
+        t1.start()
+        tt.sleep(200)
+        # t2 = threading.Thread(target = self.automation_in_page , args = (num,))
+        # t2.start()
+        # tt.sleep(2)
+
+        # page_link = []
+        # for op in output:
+        #     page_link.append(op['display_url'])
+        # for link in page_link[:num]:
+        #     a=page_link.index(link)
+        #     if a%3 == 0:
+        #      thread1 =[]
+        #      thread1.append(link)
+        #     if a%3 == 1:
+        #         thread2=[]
+        #         thread2.append(link)
+        #     if a%3 == 2:
+        #         thread3 = []
+        #         thread3.append(link)
+        # t1 = threading.Thread(target=ic.automation_in_page,args=thread1)
+        # t1.start()
+        # tt.sleep(2)
+        # t2 = threading.Thread(target=ic.automation_in_page,args=thread2)
+        # t2.start()
+        # tt.sleep(2)
+        # t3 = threading.Thread(target=ic.automation_in_page, args=thread3)
+        # t3.start()
+        # tt.sleep(2)
+        #
+        #     # count =ic.automation_in_page(link)
+
+
+
+
+
 
 if __name__=="__main__":
-    start = tt.time()
-    ic = Crawl_ins()
-    output,count=ic.automation_next('_lhyaaaaan')
-    print(count)
-    page_link=[]
-    print(output)
-    for op in output :
-        page_link.append(op['display_url'])
-        print(page_link)
-    for link in page_link:
-        ic.automation_in_page(link)
-    print(ic.comment_output)
-    print(ic.outputlist)
-    end =tt.time()
-
-    print('operating time is %d seconds long'%(end-start))
+    inscrawls = Crawl_ins()
+    html=inscrawls.get_id('ricktran1238')
+    print(html)
+    # inscrawls.final('lilili.1104',13)
+    # print('the basic information:\n%s'%inscrawls.basic_info)
+    # print('the comments:\n%s'%inscrawls.comment_output)
+    # print('the post: \n%s'%inscrawls.outputlist)
+    # end =tt.time()
+    # print('operating time is %d seconds long'%(end-start))
+    # f = open("inscrawl_result.txt ", 'a')
+    # f.write('\nthe basic information:\n%s'%inscrawls.basic_info+'\n')
+    # f.write('the post: \n%s'%inscrawls.outputlist+'\n')
+    # f.write('the comments:\n%s'%inscrawls.comment_output+'\n')
